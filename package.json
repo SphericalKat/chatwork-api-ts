@@ -1,0 +1,17 @@
+{
+  "name": "chatwork-api-ts",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "generate": "openapi-generator-cli generate -i openapi.yaml -g typescript-fetch -o src",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.15.3",
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

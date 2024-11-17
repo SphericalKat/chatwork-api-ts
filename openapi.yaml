@@ -1,0 +1,736 @@
+openapi: 3.0.0
+info:
+  title: Chatwork API
+  version: 2.0.0
+  description: API for interacting with Chatwork services
+
+servers:
+  - url: https://api.chatwork.com/v2
+
+paths:
+  /me:
+    get:
+      summary: Get your account information
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:    
+              schema:
+                $ref: '#/components/schemas/Account'
+              
+  /my/status:
+    get:
+      summary: 'Get the number of: unread messages, unread To messages, and unfinished tasks'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyStatus'
+                
+  /my/tasks:
+    get:
+      summary: Get the list of all unfinished tasks
+      parameters:
+        - name: assigned_by_account_id
+          in: query
+          schema:
+            type: integer
+        - name: status  
+          in: query
+          schema:
+            type: string
+            enum: [open, done]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+                  
+  /contacts:
+    get:
+      summary: Get the list of your contacts
+      responses:
+        '200':
+          description: Successful response  
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Contact'
+                  
+  /rooms:
+    get:
+      summary: Get the list of all chats on your account
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+                  
+    post:
+      summary: Create a new group chat
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string  
+                icon_preset:
+                  type: string
+                  enum: [group, check, document, meeting, event, project, business, study, security, star, idea, heart, magcup, beer, music, sports, travel]
+                members_admin_ids:
+                  type: string
+                members_member_ids:
+                  type: string  
+                members_readonly_ids:
+                  type: string
+              required:
+                - name
+                - members_admin_ids
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:    
+              schema:
+                type: object
+                properties:
+                  room_id:
+                    type: integer
+                    
+  /rooms/{room_id}:
+    get:
+      summary: Get chat name, icon, and Type
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+                
+    put:
+      summary: Change the title and icon type of the specified chat
+      parameters:
+        - name: room_id  
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                icon_preset:
+                  type: string
+                  enum: [group, check, document, meeting, event, project, business, study, security, star, idea, heart, magcup, beer, music, sports, travel]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  room_id:
+                    type: integer
+                    
+    delete:
+      summary: Leave/Delete a group chat
+      parameters:
+        - name: room_id
+          in: path  
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                action_type:
+                  type: string
+                  enum: [leave, delete]
+              required:
+                - action_type
+      responses:
+        '204':
+          description: Successful response
+          
+  /rooms/{room_id}/members:
+    get:
+      summary: Get the list of all chat members associated with the specified chat
+      parameters:
+        - name: room_id
+          in: path
+          required: true  
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Member'
+                  
+    put:
+      summary: Change associated members of group chat at once
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                members_admin_ids:
+                  type: string
+                members_member_ids:
+                  type: string
+                members_readonly_ids:
+                  type: string
+              required:
+                - members_admin_ids
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  admin:
+                    type: array
+                    items:
+                      type: integer
+                  member:  
+                    type: array
+                    items:
+                      type: integer
+                  readonly:
+                    type: array 
+                    items:
+                      type: integer
+                      
+  /rooms/{room_id}/messages:
+    get:
+      summary: Get all messages associated with the specified chat
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: force
+          in: query
+          schema:
+            type: integer
+            enum: [0, 1]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+                  
+    post:
+      summary: Add new message to the chat
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object  
+              properties:
+                body:
+                  type: string
+                self_unread:
+                  type: integer
+                  enum: [0, 1]
+              required:
+                - body
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message_id:
+                    type: string
+                    
+  /rooms/{room_id}/messages/{message_id}:
+    get:
+      summary: Get information about the specified message
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: message_id  
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+                
+  /rooms/{room_id}/tasks:
+    get:
+      summary: Get the list of tasks associated with the specified chat
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+        - name: assigned_by_account_id
+          in: query  
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, done]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+                  
+    post:
+      summary: Add a new task to the chat  
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                body:
+                  type: string
+                limit:
+                  type: integer
+                to_ids:
+                  type: string
+              required:
+                - body
+                - to_ids
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  task_ids:
+                    type: array
+                    items:
+                      type: integer
+                      
+  /rooms/{room_id}/tasks/{task_id}:
+    get:
+      summary: Get information about the specified task
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: integer  
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+                
+  /rooms/{room_id}/files:
+    get:
+      summary: Get the list of files associated with the specified chat
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/File'
+                  
+  /rooms/{room_id}/files/{file_id}:
+    get:
+      summary: Get information about the specified file
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: file_id
+          in: path
+          required: true  
+          schema:
+            type: integer
+        - name: create_download_url
+          in: query
+          schema:
+            type: integer
+            enum: [0, 1]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/File'
+                
+  /incoming_requests:
+    get:
+      summary: Get the list of contact approval requests you received
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IncomingRequest'
+                  
+  /incoming_requests/{request_id}:
+    put:
+      summary: Approve a contact approval request you received
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovedContact'
+                
+    delete:
+      summary: Decline a contact approval request you received  
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Successful response
+          
+components:
+  schemas:
+    Account:
+      type: object
+      properties:
+        account_id:
+          type: integer
+        room_id:
+          type: integer
+        name:
+          type: string
+        chatwork_id:
+          type: string
+        organization_id:
+          type: integer
+        organization_name:
+          type: string
+        department:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        introduction:
+          type: string
+        mail:
+          type: string
+        tel_organization:
+          type: string  
+        tel_extension:
+          type: string
+        tel_mobile:
+          type: string
+        skype:
+          type: string
+        facebook:
+          type: string
+        twitter:
+          type: string
+        avatar_image_url:
+          type: string
+          
+    MyStatus:
+      type: object  
+      properties:
+        unread_room_num:
+          type: integer
+        mention_room_num:
+          type: integer
+        mytask_room_num:
+          type: integer
+        unread_num:
+          type: integer
+        mention_num:
+          type: integer
+        mytask_num:
+          type: integer
+          
+    Contact:
+      type: object
+      properties:
+        account_id:
+          type: integer
+        room_id:
+          type: integer  
+        name:
+          type: string
+        chatwork_id:
+          type: string
+        organization_id:
+          type: integer
+        organization_name:
+          type: string
+        department:
+          type: string
+        avatar_image_url:
+          type: string
+          
+    Room:
+      type: object
+      properties:
+        room_id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+        role:
+          type: string
+        sticky:
+          type: boolean
+        unread_num:
+          type: integer
+        mention_num:
+          type: integer
+        mytask_num:
+          type: integer
+        message_num:
+          type: integer
+        file_num:
+          type: integer
+        task_num:
+          type: integer
+        icon_path:
+          type: string
+        last_update_time:
+          type: integer
+        description:
+          type: string
+          
+    Member:
+      type: object  
+      properties:
+        account_id:
+          type: integer
+        role:
+          type: string
+        name:
+          type: string
+        chatwork_id:
+          type: string  
+        organization_id:
+          type: integer
+        organization_name:
+          type: string
+        department:
+          type: string
+        avatar_image_url:
+          type: string
+          
+    Message:
+      type: object
+      properties:
+        message_id:
+          type: string
+        account:
+          $ref: '#/components/schemas/Account'
+        body:
+          type: string
+        send_time:
+          type: integer
+        update_time:
+          type: integer
+          
+    Task:
+      type: object
+      properties:
+        task_id:
+          type: integer
+        room:
+          $ref: '#/components/schemas/Room'
+        assigned_by_account:
+          $ref: '#/components/schemas/Account'  
+        message_id:
+          type: string
+        body:
+          type: string
+        limit_time:
+          type: integer
+        status:
+          type: string
+          enum: [open, done]
+          
+    File:
+      type: object  
+      properties:
+        file_id:
+          type: integer
+        account:
+          $ref: '#/components/schemas/Account'
+        message_id:
+          type: string
+        filename:
+          type: string
+        filesize:
+          type: integer
+        upload_time:
+          type: integer
+
+    IncomingRequest:
+      type: object
+      properties:
+        request_id:
+          type: integer
+        account_id:
+          type: integer
+        message:
+          type: string
+        name:
+          type: string
+        chatwork_id:
+          type: string
+        organization_id:
+          type: integer
+        organization_name:
+          type: string
+        department:
+          type: string
+        avatar_image_url:
+          type: string
+
+    ApprovedContact:
+      type: object
+      properties:
+        account_id:
+          type: integer
+        room_id:
+          type: integer
+        name:
+          type: string
+        chatwork_id:
+          type: string
+        organization_id:
+          type: integer
+        organization_name:
+          type: string
+        department:
+          type: string
+        avatar_image_url:
+          type: string
