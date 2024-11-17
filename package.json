@@ -2,6 +2,7 @@
   "name": "chatwork-api-ts",
   "module": "index.ts",
   "type": "module",
+  "version": "1.0.0",
   "scripts": {
     "generate": "openapi-generator-cli generate -i openapi.yaml -g typescript-fetch -o src",
     "build": "tsc",
