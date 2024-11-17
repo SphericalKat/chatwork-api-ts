@@ -1,0 +1,31 @@
+name: Publish package to GitHub Packages
+on:
+  release:
+    types: [published]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      # Install Bun.js
+      - name: Install Bun.js
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          export BUN_INSTALL="$HOME/.bun"
+          export PATH="$BUN_INSTALL/bin:$PATH"
+      - name: Cache Bun.js dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.bun
+            node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+      - run: bun install
+      - run: bun publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
